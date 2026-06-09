@@ -53,6 +53,7 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn(">45 min<", html)
         self.assertIn(">5 min<", html)
         self.assertIn(">10 min<", html)
+        self.assertIn(">15 min<", html)
         self.assertIn(">Light<", html)
         self.assertIn(">Dark<", html)
         self.assertIn(">Focus<", html)
