@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 import unittest
@@ -36,10 +37,45 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn("Reset", html)
         self.assertIn("id=\"timerDisplay\"", html)
         self.assertIn("id=\"workMinutesInput\"", html)
-        self.assertIn("id=\"shortBreakMinutesInput\"", html)
-        self.assertIn("id=\"longBreakMinutesInput\"", html)
-        self.assertIn("id=\"roundsBeforeLongBreakInput\"", html)
+        self.assertIn("id=\"breakMinutesInput\"", html)
+        self.assertIn("id=\"themeModeInput\"", html)
+        self.assertIn("id=\"startSoundInput\"", html)
+        self.assertIn("id=\"endSoundInput\"", html)
+        self.assertIn("id=\"tickSoundInput\"", html)
         self.assertIn("Save settings", html)
+
+    def test_index_page_contains_customization_options(self):
+        response = self.client.get("/")
+        html = response.get_data(as_text=True)
+
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="workMinutesInput">.*?<option value="15">15 min</option>.*?'
+                r'<option value="25" selected>25 min</option>.*?<option value="35">35 min</option>.*?'
+                r'<option value="45">45 min</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="breakMinutesInput">.*?<option value="5" selected>5 min</option>.*?'
+                r'<option value="10">10 min</option>.*?<option value="15">15 min</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="themeModeInput">.*?<option value="light" selected>Light</option>.*?'
+                r'<option value="dark">Dark</option>.*?<option value="focus">Focus</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
+        self.assertIn("Start sound", html)
+        self.assertIn("End sound", html)
+        self.assertIn("Tick sound", html)
 
     def test_index_page_includes_static_assets(self):
         response = self.client.get("/")
