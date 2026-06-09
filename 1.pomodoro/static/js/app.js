@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const display = document.getElementById('timerDisplay');
+  const progressCircle = document.getElementById('progressCircle');
   const timerHeading = document.getElementById('timer-heading');
+  const timerCard = document.querySelector('.timer-card');
   const modeBadge = document.getElementById('modeBadge');
   const sessionBadge = document.getElementById('sessionBadge');
   const subtitle = document.getElementById('timerSubtitle');
@@ -85,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const WEEKLY_COMPLETION_GOAL = 10;
   const MONTHLY_COMPLETION_GOAL = 40;
   const MAX_HISTORY_DAYS = 120;
+  const progressCircumference = progressCircle ? 2 * Math.PI * Number.parseFloat(progressCircle.getAttribute('r')) : 0;
 
   const formatTime = (seconds) => {
     const min = Math.floor(seconds / 60)
@@ -230,6 +233,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return 'Paused';
     }
     return 'Stopped';
+  };
+
+  const lerp = (start, end, t) => start + (end - start) * t;
+
+  const progressColor = (remainingRatio) => {
+    const elapsedRatio = 1 - remainingRatio;
+    let fromHue = 210;
+    let toHue = 50;
+    let interpolationFactor = elapsedRatio * 2;
+
+    if (elapsedRatio > 0.5) {
+      fromHue = 50;
+      toHue = 0;
+      interpolationFactor = (elapsedRatio - 0.5) * 2;
+    }
+
+    const hue = Math.round(lerp(fromHue, toHue, Math.min(Math.max(interpolationFactor, 0), 1)));
+    return `hsl(${hue} 86% 54%)`;
   };
 
   const currentSessionNumber = () => {
@@ -384,6 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateView = () => {
     const meta = modeMeta();
+    const safeRemainingRatio = Math.min(Math.max(remainingSeconds / meta.durationSeconds, 0), 1);
 
     display.textContent = formatTime(remainingSeconds);
 
@@ -412,6 +434,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (phaseDurationSummary) {
       phaseDurationSummary.textContent = `${Math.floor(meta.durationSeconds / 60)} min`;
+    }
+    if (progressCircle) {
+      progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
+      progressCircle.style.stroke = progressColor(safeRemainingRatio);
+    }
+    if (timerCard) {
+      timerCard.style.setProperty('--progress-color', progressColor(safeRemainingRatio));
+      timerCard.classList.toggle('timer-card--focus', mode === 'work' && status === 'running');
     }
 
     renderGamification();
@@ -627,5 +657,9 @@ document.addEventListener('DOMContentLoaded', () => {
   saveSettingsButton.addEventListener('click', saveSettings);
 
   restoreState();
+  if (progressCircle) {
+    progressCircle.style.strokeDasharray = `${progressCircumference}`;
+    progressCircle.style.strokeDashoffset = `${progressCircumference}`;
+  }
   updateView();
 });
