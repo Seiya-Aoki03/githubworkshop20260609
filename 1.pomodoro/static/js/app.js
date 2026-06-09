@@ -109,15 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const elapsedRatio = 1 - remainingRatio;
     let fromHue = 210;
     let toHue = 50;
-    let localT = elapsedRatio * 2;
+    let interpolationFactor = elapsedRatio * 2;
 
     if (elapsedRatio > 0.5) {
       fromHue = 50;
       toHue = 0;
-      localT = (elapsedRatio - 0.5) * 2;
+      interpolationFactor = (elapsedRatio - 0.5) * 2;
     }
 
-    const hue = Math.round(lerp(fromHue, toHue, Math.min(Math.max(localT, 0), 1)));
+    const hue = Math.round(lerp(fromHue, toHue, Math.min(Math.max(interpolationFactor, 0), 1)));
     return `hsl(${hue} 86% 54%)`;
   };
 
@@ -254,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
       phaseDurationSummary.textContent = `${Math.floor(meta.durationSeconds / 60)} min`;
     }
     if (progressCircle) {
-      progressCircle.style.strokeDasharray = `${progressCircumference}`;
       progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
       progressCircle.style.stroke = progressColor(safeRemainingRatio);
     }
