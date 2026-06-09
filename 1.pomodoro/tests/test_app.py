@@ -30,6 +30,7 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn("Focus on what matters", html)
         self.assertIn("Work Session", html)
         self.assertIn("Timer configuration", html)
+        self.assertIn("進捗とストリーク", html)
         self.assertIn("Start", html)
         self.assertIn("Stop", html)
         self.assertIn("Resume", html)
@@ -43,6 +44,14 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn("id=\"longBreakMinutesInput\"", html)
         self.assertIn("id=\"roundsBeforeLongBreakInput\"", html)
         self.assertIn("Save settings", html)
+        self.assertIn("id=\"xpSummary\"", html)
+        self.assertIn("id=\"levelSummary\"", html)
+        self.assertIn("id=\"streakSummary\"", html)
+        self.assertIn("id=\"badgeList\"", html)
+        self.assertIn("id=\"weeklyCompletionRate\"", html)
+        self.assertIn("id=\"monthlyCompletionRate\"", html)
+        self.assertIn("id=\"weeklyAverageFocus\"", html)
+        self.assertIn("id=\"monthlyAverageFocus\"", html)
 
     def test_index_page_includes_static_assets(self):
         response = self.client.get("/")

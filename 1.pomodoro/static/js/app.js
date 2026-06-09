@@ -35,6 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const roundsBeforeLongBreakInput = document.getElementById('roundsBeforeLongBreakInput');
   const saveSettingsButton = document.getElementById('saveSettingsButton');
   const settingsStatus = document.getElementById('settingsStatus');
+  const xpSummary = document.getElementById('xpSummary');
+  const levelSummary = document.getElementById('levelSummary');
+  const streakSummary = document.getElementById('streakSummary');
+  const badgeList = document.getElementById('badgeList');
+  const weeklyCompletionRate = document.getElementById('weeklyCompletionRate');
+  const monthlyCompletionRate = document.getElementById('monthlyCompletionRate');
+  const weeklyAverageFocus = document.getElementById('weeklyAverageFocus');
+  const monthlyAverageFocus = document.getElementById('monthlyAverageFocus');
+  const weeklyCompletionBar = document.getElementById('weeklyCompletionBar');
+  const monthlyCompletionBar = document.getElementById('monthlyCompletionBar');
+  const weeklyAverageFocusBar = document.getElementById('weeklyAverageFocusBar');
+  const monthlyAverageFocusBar = document.getElementById('monthlyAverageFocusBar');
 
   if (!display || !startButton || !stopButton || !resumeButton || !resetButton) {
     return;
@@ -47,7 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
     !longBreakMinutesInput ||
     !roundsBeforeLongBreakInput ||
     !saveSettingsButton ||
-    !settingsStatus
+    !settingsStatus ||
+    !xpSummary ||
+    !levelSummary ||
+    !streakSummary ||
+    !badgeList
   ) {
     return;
   }
@@ -58,7 +74,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let intervalId = null;
   let status = 'stopped';
   let completedWorkSessions = 0;
-  const progressCircumference = progressCircle ? 2 * Math.PI * Number.parseFloat(progressCircle.getAttribute('r')) : 0;
+  let gamification = {
+    xp: 0,
+    streakDays: 0,
+    lastCompletionDate: null,
+    history: [],
+    unlockedBadges: [],
+  };
+
+  const XP_PER_WORK_SESSION = 10;
+  const LEVEL_XP_STEP = 100;
+  const WEEKLY_COMPLETION_GOAL = 10;
+  const MONTHLY_COMPLETION_GOAL = 40;
+  const MAX_HISTORY_DAYS = 120;
+  const progressRadius = progressCircle ? Number.parseFloat(progressCircle.getAttribute('r')) : 0;
+  const progressCircumference = Number.isFinite(progressRadius) && progressRadius > 0 ? 2 * Math.PI * progressRadius : 0;
 
   const formatTime = (seconds) => {
     const min = Math.floor(seconds / 60)
@@ -66,6 +96,109 @@ document.addEventListener('DOMContentLoaded', () => {
       .padStart(2, '0');
     const sec = (seconds % 60).toString().padStart(2, '0');
     return `${min}:${sec}`;
+  };
+
+  const dateKey = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const shiftDate = (targetDate, days) => {
+    const shifted = new Date(targetDate);
+    shifted.setDate(shifted.getDate() + days);
+    return shifted;
+  };
+
+  const levelForXp = (xp) => {
+    return Math.floor(xp / LEVEL_XP_STEP) + 1;
+  };
+
+  const findHistoryEntry = (day) => {
+    return gamification.history.find((entry) => entry.date === day) || null;
+  };
+
+  const completionsInLastDays = (days) => {
+    const today = new Date();
+    let total = 0;
+    for (let offset = 0; offset < days; offset += 1) {
+      const day = dateKey(shiftDate(today, -offset));
+      const entry = findHistoryEntry(day);
+      if (entry) {
+        total += entry.completed;
+      }
+    }
+    return total;
+  };
+
+  const averageFocusInLastDays = (days) => {
+    const today = new Date();
+    let totalMinutes = 0;
+    let totalCompleted = 0;
+    for (let offset = 0; offset < days; offset += 1) {
+      const day = dateKey(shiftDate(today, -offset));
+      const entry = findHistoryEntry(day);
+      if (entry) {
+        totalMinutes += entry.focusMinutes;
+        totalCompleted += entry.completed;
+      }
+    }
+    if (totalCompleted === 0) {
+      return 0;
+    }
+    return totalMinutes / totalCompleted;
+  };
+
+  const unlockBadge = (badge) => {
+    if (!gamification.unlockedBadges.includes(badge)) {
+      gamification.unlockedBadges.push(badge);
+    }
+  };
+
+  const evaluateBadges = () => {
+    if (gamification.streakDays >= 3) {
+      unlockBadge('3日連続ストリーク');
+    }
+    if (completionsInLastDays(7) >= WEEKLY_COMPLETION_GOAL) {
+      unlockBadge('今週10回達成');
+    }
+  };
+
+  const registerWorkCompletion = () => {
+    const today = new Date();
+    const todayKey = dateKey(today);
+    const yesterdayKey = dateKey(shiftDate(today, -1));
+    const lastDate = gamification.lastCompletionDate;
+
+    gamification.xp += XP_PER_WORK_SESSION;
+
+    if (lastDate !== todayKey) {
+      if (lastDate === yesterdayKey) {
+        gamification.streakDays += 1;
+      } else {
+        gamification.streakDays = 1;
+      }
+      gamification.lastCompletionDate = todayKey;
+    }
+
+    const todayEntry = findHistoryEntry(todayKey);
+    if (todayEntry) {
+      todayEntry.completed += 1;
+      todayEntry.focusMinutes += settings.workMinutes;
+    } else {
+      gamification.history.push({
+        date: todayKey,
+        completed: 1,
+        focusMinutes: settings.workMinutes,
+      });
+      gamification.history.sort((a, b) => a.date.localeCompare(b.date));
+      if (gamification.history.length > MAX_HISTORY_DAYS) {
+        gamification.history = gamification.history.slice(gamification.history.length - MAX_HISTORY_DAYS);
+      }
+    }
+
+    evaluateBadges();
   };
 
   const modeMeta = () => {
@@ -184,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         status,
         remainingSeconds,
         completedWorkSessions,
+        gamification,
         updatedAt: Date.now(),
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -195,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const moveToNextMode = () => {
     if (mode === 'work') {
       completedWorkSessions += 1;
+      registerWorkCompletion();
       if (completedWorkSessions % settings.roundsBeforeLongBreak === 0) {
         mode = 'long_break';
       } else {
@@ -221,9 +356,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const setMetric = (element, valueText) => {
+    if (element) {
+      element.textContent = valueText;
+    }
+  };
+
+  const setBarWidth = (element, percent) => {
+    if (element) {
+      element.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+    }
+  };
+
+  const renderGamification = () => {
+    const level = levelForXp(gamification.xp);
+    setMetric(xpSummary, `${gamification.xp} XP`);
+    setMetric(levelSummary, `Level ${level}`);
+    setMetric(streakSummary, `${gamification.streakDays} days`);
+
+    if (badgeList) {
+      const badges = gamification.unlockedBadges;
+      if (badges.length === 0) {
+        badgeList.innerHTML = '<li>バッジは獲得後にここに表示されます</li>';
+      } else {
+        badgeList.innerHTML = badges.map((badge) => `<li>${badge}</li>`).join('');
+      }
+    }
+
+    const weeklyCompletions = completionsInLastDays(7);
+    const monthlyCompletions = completionsInLastDays(30);
+    const weeklyCompletionPercent = (weeklyCompletions / WEEKLY_COMPLETION_GOAL) * 100;
+    const monthlyCompletionPercent = (monthlyCompletions / MONTHLY_COMPLETION_GOAL) * 100;
+
+    const weeklyAvgFocus = averageFocusInLastDays(7);
+    const monthlyAvgFocus = averageFocusInLastDays(30);
+    const weeklyFocusPercent = (weeklyAvgFocus / SETTINGS_LIMITS.workMinutes.max) * 100;
+    const monthlyFocusPercent = (monthlyAvgFocus / SETTINGS_LIMITS.workMinutes.max) * 100;
+
+    setMetric(weeklyCompletionRate, `${Math.round(Math.min(100, weeklyCompletionPercent))}%`);
+    setMetric(monthlyCompletionRate, `${Math.round(Math.min(100, monthlyCompletionPercent))}%`);
+    setMetric(weeklyAverageFocus, `${Math.round(weeklyAvgFocus)} min`);
+    setMetric(monthlyAverageFocus, `${Math.round(monthlyAvgFocus)} min`);
+
+    setBarWidth(weeklyCompletionBar, weeklyCompletionPercent);
+    setBarWidth(monthlyCompletionBar, monthlyCompletionPercent);
+    setBarWidth(weeklyAverageFocusBar, weeklyFocusPercent);
+    setBarWidth(monthlyAverageFocusBar, monthlyFocusPercent);
+  };
+
   const updateView = () => {
     const meta = modeMeta();
-    const safeRemainingRatio = Math.min(Math.max(remainingSeconds / meta.durationSeconds, 0), 1);
+    const safeDurationSeconds = meta.durationSeconds > 0 ? meta.durationSeconds : 1;
+    const safeRemainingRatio = Math.min(Math.max(remainingSeconds / safeDurationSeconds, 0), 1);
 
     display.textContent = formatTime(remainingSeconds);
 
@@ -254,13 +438,17 @@ document.addEventListener('DOMContentLoaded', () => {
       phaseDurationSummary.textContent = `${Math.floor(meta.durationSeconds / 60)} min`;
     }
     if (progressCircle) {
-      progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
+      if (progressCircumference > 0) {
+        progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
+      }
       progressCircle.style.stroke = progressColor(safeRemainingRatio);
     }
     if (timerCard) {
       timerCard.style.setProperty('--progress-color', progressColor(safeRemainingRatio));
       timerCard.classList.toggle('timer-card--focus', mode === 'work' && status === 'running');
     }
+
+    renderGamification();
 
     startButton.disabled = status !== 'stopped';
     stopButton.disabled = status !== 'running';
@@ -376,6 +564,45 @@ document.addEventListener('DOMContentLoaded', () => {
         completedWorkSessions = restoredCompleted;
       }
 
+      const restoredGamification = parsed.gamification;
+      if (restoredGamification && typeof restoredGamification === 'object') {
+        const restoredXp = Number.parseInt(restoredGamification.xp, 10);
+        const restoredStreak = Number.parseInt(restoredGamification.streakDays, 10);
+        const restoredLastDate =
+          typeof restoredGamification.lastCompletionDate === 'string'
+            ? restoredGamification.lastCompletionDate
+            : null;
+        const restoredHistory = Array.isArray(restoredGamification.history)
+          ? restoredGamification.history
+              .map((entry) => ({
+                date: typeof entry.date === 'string' ? entry.date : null,
+                completed: Number.parseInt(entry.completed, 10),
+                focusMinutes: Number.parseInt(entry.focusMinutes, 10),
+              }))
+              .filter(
+                (entry) =>
+                  entry.date &&
+                  Number.isInteger(entry.completed) &&
+                  entry.completed >= 0 &&
+                  Number.isInteger(entry.focusMinutes) &&
+                  entry.focusMinutes >= 0
+              )
+          : [];
+        const restoredBadges = Array.isArray(restoredGamification.unlockedBadges)
+          ? restoredGamification.unlockedBadges.filter((badge) => typeof badge === 'string')
+          : [];
+
+        gamification = {
+          xp: Number.isInteger(restoredXp) && restoredXp >= 0 ? restoredXp : 0,
+          streakDays: Number.isInteger(restoredStreak) && restoredStreak >= 0 ? restoredStreak : 0,
+          lastCompletionDate: restoredLastDate,
+          history: restoredHistory.slice(-MAX_HISTORY_DAYS),
+          unlockedBadges: restoredBadges,
+        };
+      }
+
+      evaluateBadges();
+
       const maxSeconds = secondsForMode(mode);
       const restoredRemaining = Number.parseInt(parsed.remainingSeconds, 10);
       if (Number.isInteger(restoredRemaining) && restoredRemaining >= 1 && restoredRemaining <= maxSeconds) {
@@ -403,6 +630,13 @@ document.addEventListener('DOMContentLoaded', () => {
       status = 'stopped';
       remainingSeconds = settings.workMinutes * 60;
       completedWorkSessions = 0;
+      gamification = {
+        xp: 0,
+        streakDays: 0,
+        lastCompletionDate: null,
+        history: [],
+        unlockedBadges: [],
+      };
       writeSettingsToInputs();
       setSettingsMessage('Could not restore saved state.', 'error');
     }
