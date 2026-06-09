@@ -407,14 +407,17 @@ document.addEventListener('DOMContentLoaded', () => {
           breakMinutes: Number.parseInt(
             restoredSettings.breakMinutes ??
               restoredSettings.shortBreakMinutes ??
+              restoredSettings.longBreakMinutes ??
               DEFAULT_SETTINGS.breakMinutes,
             10,
           ),
-          themeMode: restoredSettings.themeMode ?? DEFAULT_SETTINGS.themeMode,
+          themeMode: THEME_OPTIONS.includes(restoredSettings.themeMode)
+            ? restoredSettings.themeMode
+            : DEFAULT_SETTINGS.themeMode,
           sounds: {
-            start: Boolean(restoredSettings.sounds?.start ?? true),
-            end: Boolean(restoredSettings.sounds?.end ?? true),
-            tick: Boolean(restoredSettings.sounds?.tick ?? true),
+            start: restoredSettings.sounds?.start ?? true,
+            end: restoredSettings.sounds?.end ?? true,
+            tick: restoredSettings.sounds?.tick ?? true,
           },
         };
         const valid =
