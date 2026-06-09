@@ -32,7 +32,14 @@
           <p id="timerSubtitle" class="timer-subtitle">Ready to focus</p>
         </div>
 
-        <div id="timerDisplay" class="timer-display" aria-live="polite">25:00</div>
+        <div class="progress-timer" role="group" aria-label="タイマー進捗表示">
+          <div id="focusEffect" class="focus-effect" aria-hidden="true"></div>
+          <svg class="progress-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="progress-ring__track" cx="60" cy="60" r="52"></circle>
+            <circle id="progressCircle" class="progress-ring__progress" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div id="timerDisplay" class="timer-display" aria-live="polite">25:00</div>
+        </div>
 
         <div class="timer-summary" aria-label="タイマーの補足情報">
           <div class="summary-item">
