@@ -154,10 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const evaluateBadges = () => {
     if (gamification.streakDays >= 3) {
-      unlockBadge('3日連続');
+      unlockBadge('3日連続ストリーク');
     }
     if (completionsInLastDays(7) >= WEEKLY_COMPLETION_GOAL) {
-      unlockBadge('今週10回完了');
+      unlockBadge('今週10回達成');
     }
   };
 
@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeList) {
       const badges = gamification.unlockedBadges;
       if (badges.length === 0) {
-        badgeList.innerHTML = '<li>バッジ獲得でここに表示されます</li>';
+        badgeList.innerHTML = '<li>バッジは獲得後にここに表示されます</li>';
       } else {
         badgeList.innerHTML = badges.map((badge) => `<li>${badge}</li>`).join('');
       }

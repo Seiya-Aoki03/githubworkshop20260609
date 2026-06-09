@@ -30,7 +30,7 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn("Focus on what matters", html)
         self.assertIn("Work Session", html)
         self.assertIn("Timer configuration", html)
-        self.assertIn("Progress & streaks", html)
+        self.assertIn("進捗とストリーク", html)
         self.assertIn("Start", html)
         self.assertIn("Stop", html)
         self.assertIn("Resume", html)
