@@ -87,7 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const WEEKLY_COMPLETION_GOAL = 10;
   const MONTHLY_COMPLETION_GOAL = 40;
   const MAX_HISTORY_DAYS = 120;
-  const progressCircumference = progressCircle ? 2 * Math.PI * Number.parseFloat(progressCircle.getAttribute('r')) : 0;
+  const progressRadius = progressCircle ? Number.parseFloat(progressCircle.getAttribute('r')) : 0;
+  const progressCircumference = Number.isFinite(progressRadius) && progressRadius > 0 ? 2 * Math.PI * progressRadius : 0;
 
   const formatTime = (seconds) => {
     const min = Math.floor(seconds / 60)
@@ -405,7 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateView = () => {
     const meta = modeMeta();
-    const safeRemainingRatio = Math.min(Math.max(remainingSeconds / meta.durationSeconds, 0), 1);
+    const safeDurationSeconds = meta.durationSeconds > 0 ? meta.durationSeconds : 1;
+    const safeRemainingRatio = Math.min(Math.max(remainingSeconds / safeDurationSeconds, 0), 1);
 
     display.textContent = formatTime(remainingSeconds);
 
@@ -436,7 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
       phaseDurationSummary.textContent = `${Math.floor(meta.durationSeconds / 60)} min`;
     }
     if (progressCircle) {
-      progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
+      if (progressCircumference > 0) {
+        progressCircle.style.strokeDashoffset = `${progressCircumference * (1 - safeRemainingRatio)}`;
+      }
       progressCircle.style.stroke = progressColor(safeRemainingRatio);
     }
     if (timerCard) {
