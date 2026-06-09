@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 import unittest
@@ -47,16 +48,31 @@ class PomodoroAppTestCase(unittest.TestCase):
         response = self.client.get("/")
         html = response.get_data(as_text=True)
 
-        self.assertIn(">15 min<", html)
-        self.assertIn(">25 min<", html)
-        self.assertIn(">35 min<", html)
-        self.assertIn(">45 min<", html)
-        self.assertIn(">5 min<", html)
-        self.assertIn(">10 min<", html)
-        self.assertIn(">15 min<", html)
-        self.assertIn(">Light<", html)
-        self.assertIn(">Dark<", html)
-        self.assertIn(">Focus<", html)
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="workMinutesInput">.*?<option value="15">15 min</option>.*?'
+                r'<option value="25" selected>25 min</option>.*?<option value="35">35 min</option>.*?'
+                r'<option value="45">45 min</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="breakMinutesInput">.*?<option value="5" selected>5 min</option>.*?'
+                r'<option value="10">10 min</option>.*?<option value="15">15 min</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
+        self.assertRegex(
+            html,
+            re.compile(
+                r'<select id="themeModeInput">.*?<option value="light" selected>Light</option>.*?'
+                r'<option value="dark">Dark</option>.*?<option value="focus">Focus</option>.*?</select>',
+                re.DOTALL,
+            ),
+        )
         self.assertIn("Start sound", html)
         self.assertIn("End sound", html)
         self.assertIn("Tick sound", html)

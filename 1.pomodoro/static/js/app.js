@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     end: 440,
     tick: 880,
   };
+  const SOUND_GAINS = {
+    start: 0.03,
+    end: 0.03,
+    tick: 0.015,
+  };
+  const SOUND_ENVELOPE = {
+    initialGain: 0.0001,
+    attackSeconds: 0.01,
+    releaseSeconds: 0.12,
+    durationSeconds: 0.13,
+  };
 
   const display = document.getElementById('timerDisplay');
   const timerHeading = document.getElementById('timer-heading');
@@ -157,18 +168,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     const now = context.currentTime;
-    const targetGain = soundName === 'tick' ? 0.015 : 0.03;
+    const targetGain = SOUND_GAINS[soundName];
 
     oscillator.type = soundName === 'tick' ? 'square' : 'sine';
     oscillator.frequency.setValueAtTime(SOUND_FREQUENCIES[soundName], now);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(targetGain, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+    gain.gain.setValueAtTime(SOUND_ENVELOPE.initialGain, now);
+    gain.gain.exponentialRampToValueAtTime(targetGain, now + SOUND_ENVELOPE.attackSeconds);
+    gain.gain.exponentialRampToValueAtTime(
+      SOUND_ENVELOPE.initialGain,
+      now + SOUND_ENVELOPE.releaseSeconds,
+    );
 
     oscillator.connect(gain);
     gain.connect(context.destination);
     oscillator.start(now);
-    oscillator.stop(now + 0.13);
+    oscillator.stop(now + SOUND_ENVELOPE.durationSeconds);
   };
 
   const readSettingsFromInputs = () => {
