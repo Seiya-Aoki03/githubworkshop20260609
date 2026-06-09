@@ -87,6 +87,57 @@
           <p id="settingsStatus" class="settings-message" role="status" aria-live="polite"></p>
         </div>
       </section>
+
+      <section class="gamification-card" aria-labelledby="gamification-heading">
+        <div class="section-heading">
+          <p class="eyebrow eyebrow--muted">Gamification</p>
+          <h2 id="gamification-heading" class="card-title">Progress & streaks</h2>
+        </div>
+
+        <div class="gamification-grid">
+          <article class="summary-item">
+            <span class="summary-label">XP</span>
+            <strong id="xpSummary">0 XP</strong>
+            <p id="levelSummary" class="summary-note">Level 1</p>
+          </article>
+          <article class="summary-item">
+            <span class="summary-label">Streak</span>
+            <strong id="streakSummary">0 days</strong>
+            <p class="summary-note">Consecutive focus days</p>
+          </article>
+        </div>
+
+        <div class="badge-section">
+          <h3 class="subsection-title">Badges</h3>
+          <ul id="badgeList" class="badge-list" aria-label="達成バッジ"></ul>
+        </div>
+
+        <div class="stats-section" aria-label="週間/月間統計グラフ">
+          <h3 class="subsection-title">Weekly / Monthly stats</h3>
+          <div class="stats-grid">
+            <div class="metric-item">
+              <span>Weekly completion rate</span>
+              <strong id="weeklyCompletionRate">0%</strong>
+              <div class="progress-track"><div id="weeklyCompletionBar" class="progress-fill"></div></div>
+            </div>
+            <div class="metric-item">
+              <span>Monthly completion rate</span>
+              <strong id="monthlyCompletionRate">0%</strong>
+              <div class="progress-track"><div id="monthlyCompletionBar" class="progress-fill"></div></div>
+            </div>
+            <div class="metric-item">
+              <span>Weekly avg focus</span>
+              <strong id="weeklyAverageFocus">0 min</strong>
+              <div class="progress-track"><div id="weeklyAverageFocusBar" class="progress-fill progress-fill--muted"></div></div>
+            </div>
+            <div class="metric-item">
+              <span>Monthly avg focus</span>
+              <strong id="monthlyAverageFocus">0 min</strong>
+              <div class="progress-track"><div id="monthlyAverageFocusBar" class="progress-fill progress-fill--muted"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   </body>
