@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pomodoro Timer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero-panel" aria-labelledby="app-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Pomodoro Timer</p>
+          <h1 id="app-title" class="timer-title">Focus on what matters</h1>
+          <p class="hero-description">
+            まずは見た目と情報の配置を整え、あとからタイマーの状態遷移を重ねていきます。
+          </p>
+        </div>
+
+        <div class="hero-badge-group" aria-label="現在の状態">
+          <span id="modeBadge" class="state-badge state-badge--active">Work</span>
+          <span id="sessionBadge" class="state-badge">Session 1</span>
+        </div>
+      </section>
+
+      <section class="timer-card" aria-labelledby="timer-heading">
+        <div class="timer-card__header">
+          <div>
+            <p class="eyebrow eyebrow--muted">Current cycle</p>
+            <h2 id="timer-heading" class="card-title">Work Session</h2>
+          </div>
+          <p id="timerSubtitle" class="timer-subtitle">Ready to focus</p>
+        </div>
+
+        <div id="timerDisplay" class="timer-display" aria-live="polite">25:00</div>
+
+        <div class="timer-summary" aria-label="タイマーの補足情報">
+          <div class="summary-item">
+            <span class="summary-label">Remaining</span>
+            <strong id="remainingSummary">25 min</strong>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Status</span>
+            <strong id="statusSummary">Stopped</strong>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Phase duration</span>
+            <strong id="workSummary">25 min</strong>
+          </div>
+        </div>
+
+        <div class="timer-actions" aria-label="操作ボタン">
+          <button id="startButton" type="button">Start</button>
+          <button id="stopButton" type="button" disabled>Stop</button>
+          <button id="resumeButton" type="button" disabled>Resume</button>
+          <button id="resetButton" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="settings-card" aria-labelledby="settings-heading">
+        <div class="section-heading">
+          <p class="eyebrow eyebrow--muted">Settings</p>
+          <h2 id="settings-heading" class="card-title">Timer configuration</h2>
+        </div>
+
+        <div class="settings-grid">
+          <label class="setting-field">
+            <span>Work minutes</span>
+            <input id="workMinutesInput" type="number" value="25" min="1" max="180" step="1">
+          </label>
+          <label class="setting-field">
+            <span>Short break</span>
+            <input id="shortBreakMinutesInput" type="number" value="5" min="1" max="60" step="1">
+          </label>
+          <label class="setting-field">
+            <span>Long break</span>
+            <input id="longBreakMinutesInput" type="number" value="15" min="1" max="120" step="1">
+          </label>
+          <label class="setting-field">
+            <span>Rounds before long break</span>
+            <input id="roundsBeforeLongBreakInput" type="number" value="4" min="1" max="12" step="1">
+          </label>
+        </div>
+
+        <div class="settings-actions" aria-label="設定操作">
+          <button id="saveSettingsButton" type="button">Save settings</button>
+          <p id="settingsStatus" class="settings-message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
