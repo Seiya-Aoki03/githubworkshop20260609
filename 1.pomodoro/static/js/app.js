@@ -405,10 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const candidate = {
           workMinutes: Number.parseInt(restoredSettings.workMinutes, 10),
           breakMinutes: Number.parseInt(
-            restoredSettings.breakMinutes ?? restoredSettings.shortBreakMinutes,
+            restoredSettings.breakMinutes ??
+              restoredSettings.shortBreakMinutes ??
+              DEFAULT_SETTINGS.breakMinutes,
             10,
           ),
-          themeMode: restoredSettings.themeMode,
+          themeMode: restoredSettings.themeMode ?? DEFAULT_SETTINGS.themeMode,
           sounds: {
             start: Boolean(restoredSettings.sounds?.start ?? true),
             end: Boolean(restoredSettings.sounds?.end ?? true),
