@@ -1,16 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const STORAGE_KEY = 'pomodoro.state.v1';
+  const STORAGE_KEY = 'pomodoro.state.v2';
   const DEFAULT_SETTINGS = {
     workMinutes: 25,
-    shortBreakMinutes: 5,
-    longBreakMinutes: 15,
-    roundsBeforeLongBreak: 4,
+    breakMinutes: 5,
+    themeMode: 'light',
+    sounds: {
+      start: true,
+      end: true,
+      tick: true,
+    },
   };
-  const SETTINGS_LIMITS = {
-    workMinutes: { min: 1, max: 180 },
-    shortBreakMinutes: { min: 1, max: 60 },
-    longBreakMinutes: { min: 1, max: 120 },
-    roundsBeforeLongBreak: { min: 1, max: 12 },
+  const WORK_MINUTE_OPTIONS = [15, 25, 35, 45];
+  const BREAK_MINUTE_OPTIONS = [5, 10, 15];
+  const THEME_OPTIONS = ['light', 'dark', 'focus'];
+  const SOUND_FREQUENCIES = {
+    start: 660,
+    end: 440,
+    tick: 880,
   };
 
   const display = document.getElementById('timerDisplay');
@@ -28,9 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetButton = document.getElementById('resetButton');
 
   const workMinutesInput = document.getElementById('workMinutesInput');
-  const shortBreakMinutesInput = document.getElementById('shortBreakMinutesInput');
-  const longBreakMinutesInput = document.getElementById('longBreakMinutesInput');
-  const roundsBeforeLongBreakInput = document.getElementById('roundsBeforeLongBreakInput');
+  const breakMinutesInput = document.getElementById('breakMinutesInput');
+  const themeModeInput = document.getElementById('themeModeInput');
+  const startSoundInput = document.getElementById('startSoundInput');
+  const endSoundInput = document.getElementById('endSoundInput');
+  const tickSoundInput = document.getElementById('tickSoundInput');
   const saveSettingsButton = document.getElementById('saveSettingsButton');
   const settingsStatus = document.getElementById('settingsStatus');
 
@@ -41,9 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (
     !timerHeading ||
     !workMinutesInput ||
-    !shortBreakMinutesInput ||
-    !longBreakMinutesInput ||
-    !roundsBeforeLongBreakInput ||
+    !breakMinutesInput ||
+    !themeModeInput ||
+    !startSoundInput ||
+    !endSoundInput ||
+    !tickSoundInput ||
     !saveSettingsButton ||
     !settingsStatus
   ) {
@@ -56,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let intervalId = null;
   let status = 'stopped';
   let completedWorkSessions = 0;
+  let audioContext = null;
 
   const formatTime = (seconds) => {
     const min = Math.floor(seconds / 60)
@@ -79,14 +90,14 @@ document.addEventListener('DOMContentLoaded', () => {
         badge: 'Short Break',
         heading: 'Short Break',
         subtitle: 'Take a short recovery',
-        durationSeconds: settings.shortBreakMinutes * 60,
+        durationSeconds: settings.breakMinutes * 60,
       };
     }
     return {
       badge: 'Long Break',
       heading: 'Long Break',
       subtitle: 'Long recovery after focus rounds',
-      durationSeconds: settings.longBreakMinutes * 60,
+      durationSeconds: settings.breakMinutes * 60,
     };
   };
 
@@ -115,24 +126,82 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const applyTheme = () => {
+    document.body.dataset.theme = settings.themeMode;
+  };
+
+  const ensureAudioContext = () => {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      return null;
+    }
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+    return audioContext;
+  };
+
+  const playSound = (soundName) => {
+    if (!settings.sounds[soundName]) {
+      return;
+    }
+
+    const context = ensureAudioContext();
+    if (!context) {
+      return;
+    }
+
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const now = context.currentTime;
+    const targetGain = soundName === 'tick' ? 0.015 : 0.03;
+
+    oscillator.type = soundName === 'tick' ? 'square' : 'sine';
+    oscillator.frequency.setValueAtTime(SOUND_FREQUENCIES[soundName], now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(targetGain, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.13);
+  };
+
   const readSettingsFromInputs = () => {
     const candidate = {
       workMinutes: Number.parseInt(workMinutesInput.value, 10),
-      shortBreakMinutes: Number.parseInt(shortBreakMinutesInput.value, 10),
-      longBreakMinutes: Number.parseInt(longBreakMinutesInput.value, 10),
-      roundsBeforeLongBreak: Number.parseInt(roundsBeforeLongBreakInput.value, 10),
+      breakMinutes: Number.parseInt(breakMinutesInput.value, 10),
+      themeMode: themeModeInput.value,
+      sounds: {
+        start: startSoundInput.checked,
+        end: endSoundInput.checked,
+        tick: tickSoundInput.checked,
+      },
     };
 
-    const keys = Object.keys(SETTINGS_LIMITS);
-    for (const key of keys) {
-      const value = candidate[key];
-      const limit = SETTINGS_LIMITS[key];
-      if (!Number.isInteger(value) || value < limit.min || value > limit.max) {
-        return {
-          ok: false,
-          message: `${key} must be between ${limit.min} and ${limit.max}.`,
-        };
-      }
+    if (!WORK_MINUTE_OPTIONS.includes(candidate.workMinutes)) {
+      return {
+        ok: false,
+        message: `workMinutes must be one of ${WORK_MINUTE_OPTIONS.join(', ')}.`,
+      };
+    }
+
+    if (!BREAK_MINUTE_OPTIONS.includes(candidate.breakMinutes)) {
+      return {
+        ok: false,
+        message: `breakMinutes must be one of ${BREAK_MINUTE_OPTIONS.join(', ')}.`,
+      };
+    }
+
+    if (!THEME_OPTIONS.includes(candidate.themeMode)) {
+      return {
+        ok: false,
+        message: `themeMode must be one of ${THEME_OPTIONS.join(', ')}.`,
+      };
     }
 
     return { ok: true, value: candidate };
@@ -140,19 +209,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const writeSettingsToInputs = () => {
     workMinutesInput.value = String(settings.workMinutes);
-    shortBreakMinutesInput.value = String(settings.shortBreakMinutes);
-    longBreakMinutesInput.value = String(settings.longBreakMinutes);
-    roundsBeforeLongBreakInput.value = String(settings.roundsBeforeLongBreak);
+    breakMinutesInput.value = String(settings.breakMinutes);
+    themeModeInput.value = settings.themeMode;
+    startSoundInput.checked = settings.sounds.start;
+    endSoundInput.checked = settings.sounds.end;
+    tickSoundInput.checked = settings.sounds.tick;
   };
 
   const secondsForMode = (targetMode) => {
     if (targetMode === 'work') {
       return settings.workMinutes * 60;
     }
-    if (targetMode === 'short_break') {
-      return settings.shortBreakMinutes * 60;
-    }
-    return settings.longBreakMinutes * 60;
+    return settings.breakMinutes * 60;
   };
 
   const persistState = () => {
@@ -203,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateView = () => {
     const meta = modeMeta();
 
+    applyTheme();
     display.textContent = formatTime(remainingSeconds);
 
     timerHeading.textContent = meta.heading;
@@ -252,10 +321,12 @@ document.addEventListener('DOMContentLoaded', () => {
     intervalId = window.setInterval(() => {
       if (remainingSeconds > 1) {
         remainingSeconds -= 1;
+        playSound('tick');
         updateView();
         return;
       }
 
+      playSound('end');
       moveToNextMode();
       updateView();
     }, 1000);
@@ -265,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (status !== 'stopped') {
       return;
     }
+    playSound('start');
     status = 'running';
     runInterval();
     updateView();
@@ -283,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (status !== 'paused') {
       return;
     }
+    playSound('start');
     status = 'running';
     runInterval();
     updateView();
@@ -317,15 +390,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (restoredSettings && typeof restoredSettings === 'object') {
         const candidate = {
           workMinutes: Number.parseInt(restoredSettings.workMinutes, 10),
-          shortBreakMinutes: Number.parseInt(restoredSettings.shortBreakMinutes, 10),
-          longBreakMinutes: Number.parseInt(restoredSettings.longBreakMinutes, 10),
-          roundsBeforeLongBreak: Number.parseInt(restoredSettings.roundsBeforeLongBreak, 10),
+          breakMinutes: Number.parseInt(
+            restoredSettings.breakMinutes ?? restoredSettings.shortBreakMinutes,
+            10,
+          ),
+          themeMode: restoredSettings.themeMode,
+          sounds: {
+            start: Boolean(restoredSettings.sounds?.start ?? true),
+            end: Boolean(restoredSettings.sounds?.end ?? true),
+            tick: Boolean(restoredSettings.sounds?.tick ?? true),
+          },
         };
-        const valid = Object.keys(SETTINGS_LIMITS).every((key) => {
-          const value = candidate[key];
-          const limit = SETTINGS_LIMITS[key];
-          return Number.isInteger(value) && value >= limit.min && value <= limit.max;
-        });
+        const valid =
+          WORK_MINUTE_OPTIONS.includes(candidate.workMinutes) &&
+          BREAK_MINUTE_OPTIONS.includes(candidate.breakMinutes) &&
+          THEME_OPTIONS.includes(candidate.themeMode);
         if (valid) {
           settings = candidate;
         }

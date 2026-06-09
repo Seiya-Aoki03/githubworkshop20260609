@@ -36,10 +36,29 @@ class PomodoroAppTestCase(unittest.TestCase):
         self.assertIn("Reset", html)
         self.assertIn("id=\"timerDisplay\"", html)
         self.assertIn("id=\"workMinutesInput\"", html)
-        self.assertIn("id=\"shortBreakMinutesInput\"", html)
-        self.assertIn("id=\"longBreakMinutesInput\"", html)
-        self.assertIn("id=\"roundsBeforeLongBreakInput\"", html)
+        self.assertIn("id=\"breakMinutesInput\"", html)
+        self.assertIn("id=\"themeModeInput\"", html)
+        self.assertIn("id=\"startSoundInput\"", html)
+        self.assertIn("id=\"endSoundInput\"", html)
+        self.assertIn("id=\"tickSoundInput\"", html)
         self.assertIn("Save settings", html)
+
+    def test_index_page_contains_customization_options(self):
+        response = self.client.get("/")
+        html = response.get_data(as_text=True)
+
+        self.assertIn(">15 min<", html)
+        self.assertIn(">25 min<", html)
+        self.assertIn(">35 min<", html)
+        self.assertIn(">45 min<", html)
+        self.assertIn(">5 min<", html)
+        self.assertIn(">10 min<", html)
+        self.assertIn(">Light<", html)
+        self.assertIn(">Dark<", html)
+        self.assertIn(">Focus<", html)
+        self.assertIn("Start sound", html)
+        self.assertIn("End sound", html)
+        self.assertIn("Tick sound", html)
 
     def test_index_page_includes_static_assets(self):
         response = self.client.get("/")

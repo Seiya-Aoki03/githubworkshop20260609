@@ -3,6 +3,11 @@
   --bg: #f5efe6;
   --panel: #fffaf3;
   --panel-strong: #fff4e8;
+  --timer-panel: linear-gradient(180deg, var(--panel) 0%, #fff8f0 100%);
+  --settings-panel: rgba(255, 250, 244, 0.92);
+  --hero-badge-bg: rgba(255, 255, 255, 0.82);
+  --summary-bg: rgba(255, 255, 255, 0.6);
+  --field-bg: rgba(255, 255, 255, 0.72);
   --text: #2e2520;
   --muted: #7d6c61;
   --accent: #db724d;
@@ -10,6 +15,50 @@
   --accent-soft: rgba(219, 114, 77, 0.12);
   --border: rgba(46, 37, 32, 0.12);
   --shadow: 0 28px 90px rgba(68, 49, 34, 0.12);
+  --body-glow: rgba(255, 255, 255, 0.72);
+  --body-gradient-end: var(--bg);
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #19161b;
+  --panel: #231f26;
+  --panel-strong: #2a2430;
+  --timer-panel: linear-gradient(180deg, #27222b 0%, #201b26 100%);
+  --settings-panel: rgba(33, 28, 38, 0.95);
+  --hero-badge-bg: rgba(255, 255, 255, 0.06);
+  --summary-bg: rgba(255, 255, 255, 0.04);
+  --field-bg: rgba(255, 255, 255, 0.06);
+  --text: #f6f1ee;
+  --muted: #c0b2ab;
+  --accent: #ff9f6a;
+  --accent-hover: #ffb586;
+  --accent-soft: rgba(255, 159, 106, 0.18);
+  --border: rgba(255, 255, 255, 0.12);
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+  --body-glow: rgba(255, 255, 255, 0.04);
+  --body-gradient-end: #131016;
+}
+
+body[data-theme="focus"] {
+  color-scheme: light;
+  --bg: #eef1ef;
+  --panel: #ffffff;
+  --panel-strong: #ffffff;
+  --timer-panel: var(--panel);
+  --settings-panel: #ffffff;
+  --hero-badge-bg: #ffffff;
+  --summary-bg: #ffffff;
+  --field-bg: #ffffff;
+  --text: #182022;
+  --muted: #5f6b72;
+  --accent: #3066d5;
+  --accent-hover: #2455b8;
+  --accent-soft: rgba(48, 102, 213, 0.1);
+  --border: rgba(24, 32, 34, 0.1);
+  --shadow: 0 12px 30px rgba(24, 32, 34, 0.08);
+  --body-glow: rgba(255, 255, 255, 0.2);
+  --body-gradient-end: #eef1ef;
 }
 
 * {
@@ -20,9 +69,10 @@ body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 38%),
-    linear-gradient(180deg, #fff8ef 0%, var(--bg) 100%);
+    radial-gradient(circle at top, var(--body-glow), transparent 38%),
+    linear-gradient(180deg, #fff8ef 0%, var(--body-gradient-end) 100%);
   color: var(--text);
+  transition: background 160ms ease, color 160ms ease;
 }
 
 .app-shell {
@@ -92,7 +142,7 @@ body {
   min-height: 40px;
   padding: 0 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--hero-badge-bg);
   border: 1px solid var(--border);
   color: var(--muted);
   font-weight: 700;
@@ -104,7 +154,7 @@ body {
 }
 
 .timer-card {
-  background: linear-gradient(180deg, var(--panel) 0%, #fff8f0 100%);
+  background: var(--timer-panel);
 }
 
 .timer-card__header,
@@ -143,7 +193,7 @@ body {
 .summary-item {
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--summary-bg);
   border: 1px solid var(--border);
 }
 
@@ -188,7 +238,7 @@ button:focus-visible {
 }
 
 .settings-card {
-  background: rgba(255, 250, 244, 0.92);
+  background: var(--settings-panel);
 }
 
 .settings-grid {
@@ -209,15 +259,45 @@ button:focus-visible {
   color: var(--text);
 }
 
-.setting-field input {
+.setting-field input,
+.setting-field select {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--field-bg);
   color: var(--text);
   padding: 14px 16px;
   font: inherit;
   font-weight: 700;
+}
+
+.sound-field {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  background: var(--field-bg);
+}
+
+.sound-field legend {
+  padding: 0 8px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sound-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.sound-option + .sound-option {
+  margin-top: 10px;
+}
+
+.sound-option input {
+  width: auto;
+  margin: 0;
 }
 
 .settings-actions {
